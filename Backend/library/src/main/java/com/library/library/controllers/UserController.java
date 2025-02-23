@@ -23,6 +23,7 @@ public class UserController {
     }
 
     // Obtener todos los usuarios solo (contraseña, rol, nombre, apellido, grado, email)
+    @CrossOrigin(origins = "*") 
     @GetMapping("/some-data")
     public List<Map<String, Object>> getUsersSomeData() {
         return userService.getUsersSomeData();

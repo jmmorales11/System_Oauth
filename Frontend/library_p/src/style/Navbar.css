@@ -1,0 +1,32 @@
+
+
+.logo{
+
+    height: 90px;
+
+
+}
+.top-navbar {
+    position: relative; /* Eliminar el 'fixed-top' de la barra principal */
+}
+
+.sidebar {
+    position: fixed;
+
+    left: 0;
+    bottom: 0;
+    width: 250px;
+    z-index: 1000;
+}
+
+/* Hacer la barra lateral oculta por defecto en pantallas pequeñas */
+.sidebar .navbar-collapse {
+    display: none;
+}
+
+/* Asegurarse de que la barra lateral se muestre en pantallas grandes */
+@media (min-width: 992px) {
+    .sidebar .navbar-collapse {
+        display: block;
+    }
+}

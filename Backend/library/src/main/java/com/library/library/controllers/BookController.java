@@ -17,6 +17,7 @@ public class BookController {
     BookService bookService;
 
     //API get all books
+    @CrossOrigin(origins="*")
     @GetMapping
     public List<BookModel> getBooks(){
         return bookService.getAllBooks();

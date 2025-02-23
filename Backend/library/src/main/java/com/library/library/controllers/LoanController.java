@@ -25,12 +25,14 @@ public class LoanController {
     }
 
     //API para obetener (cedula, nombre, apellido, codigo, libro, Fecha de adquisicion, Fecha de devolución)
+    @CrossOrigin(origins="*")
     @GetMapping("/some-data")
     public List<LoanUserBookDTO> getSomeData(){
         return loanServices.getAllLoanUserBook();
     }
 
     //API para obtener los datos de la bitacora
+    @CrossOrigin(origins="*")
     @GetMapping("/binnacle")
     public List<BinacleDTO> getDataBinnacle(){
         return loanServices.getDataBinnacle();
@@ -38,6 +40,7 @@ public class LoanController {
 
     //API para guardar un préstamo
     @PostMapping
+    @CrossOrigin(origins="*")
     public LoanModel saveLoan(@RequestBody LoanModel loan){
         return loanServices.saveLoan(loan);
     }
@@ -49,6 +52,7 @@ public class LoanController {
     }
 
     //API para devolver el libro
+    @CrossOrigin(origins="*")
     @PutMapping("/returned-book/{id}")
     public LoanModel returnedBook(@RequestBody LoanModel loanModel,  @PathVariable("id") Integer id){
         return loanServices.returnedBook(loanModel, id);
