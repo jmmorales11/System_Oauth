@@ -8,7 +8,7 @@ export default function Home(){
         <>
         <div id="root">
         <Navbar/>
-        <div class="page">
+        <div className="page">
         <h1>Pagina Home</h1>
         <h1>Pagina Home</h1>
         <h1>Pagina Home</h1>

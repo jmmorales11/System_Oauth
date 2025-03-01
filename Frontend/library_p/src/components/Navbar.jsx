@@ -1,14 +1,24 @@
-import React, { useState } from "react";
-import { FaHome, FaBook, FaRecycle, FaEnvelope, FaUser, FaBookOpen } from 'react-icons/fa'; // Importar íconos
+import { useState, useContext, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
+import { FaHome, FaBook, FaRecycle, FaEnvelope, FaUser, FaBookOpen, FaSignOutAlt } from 'react-icons/fa'; // Importar íconos
 import "../style/Navbar.css";
+import { AuthContext } from '../context/AuthContext'; 
 
 function Navbar() {
     // Estado para controlar la visibilidad del menú
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const { logout } = useContext(AuthContext);
+    const navigate = useNavigate();
 
     // Función para alternar el estado del menú
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
+    };
+
+    const handleLogout = () => {
+        logout();  
+        navigate('/login', { replace: true });
+        window.location.reload();
     };
 
     return (
@@ -78,6 +88,12 @@ function Navbar() {
                             <a className="nav-link text-white fw-bold" href="/contacto">
                                 <FaEnvelope className="me-2" /> Contacto
                             </a>
+                            <hr className="border-white" />
+                        </li>
+                        <li className="nav-item">
+                            <button className="nav-link text-white fw-bold btn btn-link" onClick={handleLogout}>
+                                <FaSignOutAlt className="me-2" /> Salir
+                            </button>
                             <hr className="border-white" />
                         </li>
                     </ul>

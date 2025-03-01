@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { API_URL_USER } from '../config';
+import { AuthContext } from '../context/AuthContext';
 
 const UsersTable = ({ onUserSelect }) => {
+    const { user: authenticatedUser } = useContext(AuthContext);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -52,6 +54,8 @@ const UsersTable = ({ onUserSelect }) => {
         }
     };
 
+    const usersToDisplay = authenticatedUser.role === 'ADMIN' ? filteredUsers : filteredUsers.filter(user => user.id_user === authenticatedUser.id_user);
+
     return (
         <div className="container mt-5">
             {loading ? (
@@ -70,9 +74,9 @@ const UsersTable = ({ onUserSelect }) => {
                         />
                     </div>
 
-                    {!selectedUser && searchTerm && filteredUsers.length > 0 ? (
+                    {!selectedUser && searchTerm && usersToDisplay.length > 0 ? (
                         <ul className="list-group mb-4">
-                            {filteredUsers.map((user) => (
+                            {usersToDisplay.map((user) => (
                                 <li
                                     key={user.id_user}
                                     className="list-group-item d-flex justify-content-between align-items-center"
@@ -83,7 +87,7 @@ const UsersTable = ({ onUserSelect }) => {
                                 </li>
                             ))}
                         </ul>
-                    ) : searchTerm && !selectedUser && filteredUsers.length === 0 ? (
+                    ) : searchTerm && !selectedUser && usersToDisplay.length === 0 ? (
                         <p>No se encontraron resultados.</p>
                     ) : null}
 

@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { API_URL_USER } from '../config';
+import { AuthContext } from '../context/AuthContext';
 
 const UsersView = () => {
+    const { user: authenticatedUser } = useContext(AuthContext);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [editingUser, setEditingUser] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [newUser, setNewUser] = useState({
-        first_name: '', last_name: '', mail: '', password: '', code: ''
+        first_name: '', last_name: '', mail: '', password: '', code: '', role: 'USER'
     });
 
     // Obtener usuarios desde la API
@@ -30,7 +32,6 @@ const UsersView = () => {
         fetchUsers();
     }, []);
 
-
     // Manejar cambios en los inputs
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -40,10 +41,10 @@ const UsersView = () => {
     // Crear nuevo usuario
     const handleCreateUser = async () => {
         try {
-            const response = await axios.post(API_URL_USER / 'register-user', newUser);
+            const response = await axios.post(`${API_URL_USER}/register-user`, newUser);
             setUsers([...users, response.data]); // Agregar usuario a la tabla
             alert("👤 Usuario agregado correctamente.");
-            setNewUser({ first_name: '', last_name: '', mail: '', password: '', code: '' });
+            setNewUser({ first_name: '', last_name: '', mail: '', password: '', code: '', role: 'USER' });
             setShowForm(false);
         } catch (error) {
             console.error("❌ Error al agregar el usuario:", error);
@@ -70,13 +71,16 @@ const UsersView = () => {
             setUsers(users.map(user => (user.id_user === editingUser.id_user ? response.data : user)));
             alert("✅ Usuario actualizado correctamente.");
             setEditingUser(null);
-            setNewUser({ first_name: '', last_name: '', mail: '', password: '', code: '' });
+            setNewUser({ first_name: '', last_name: '', mail: '', password: '', code: '', role: 'USER' });
             setShowForm(false);
         } catch (error) {
             console.error("❌ Error al actualizar el usuario:", error);
             alert("Error al actualizar el usuario.");
         }
     };
+
+    // Filtrar usuarios según el rol del usuario autenticado
+    const usersToDisplay = authenticatedUser.role === 'ADMIN' ? users : users.filter(user => user.id_user === authenticatedUser.id_user);
 
     return (
         <div className="container-fluid mt-4">
@@ -88,28 +92,32 @@ const UsersView = () => {
                         <h2 className="text-center mb-4">👥 Gestión de Usuarios</h2>
 
                         {/* Filtro de búsqueda */}
-                        <input
-                            type="text"
-                            className="form-control mb-3"
-                            placeholder="Buscar por nombre, apellido o correo"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                        {authenticatedUser.role === 'ADMIN' && (
+                            <input
+                                type="text"
+                                className="form-control mb-3"
+                                placeholder="Buscar por nombre, apellido o correo"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        )}
 
                         {/* Botón para agregar usuario */}
-                        <button
-                            className="btn btn-success mb-3"
-                            onClick={() => {
-                                if (showForm && !editingUser) {
-                                    setShowForm(false);
-                                } else {
-                                    setEditingUser(null);
-                                    setNewUser({ first_name: '', last_name: '', mail: '', password: '', code: '' });
-                                    setShowForm(true);
-                                }
-                            }}>
-                            {showForm && !editingUser ? "❌ Cerrar Formulario" : "➕ Agregar Usuario"}
-                        </button>
+                        {authenticatedUser.role === 'ADMIN' && (
+                            <button
+                                className="btn btn-success mb-3"
+                                onClick={() => {
+                                    if (showForm && !editingUser) {
+                                        setShowForm(false);
+                                    } else {
+                                        setEditingUser(null);
+                                        setNewUser({ first_name: '', last_name: '', mail: '', password: '', code: '', role: 'USER' });
+                                        setShowForm(true);
+                                    }
+                                }}>
+                                {showForm && !editingUser ? "❌ Cerrar Formulario" : "➕ Agregar Usuario"}
+                            </button>
+                        )}
 
                         {/* Tabla de usuarios */}
                         <div className="table-responsive">
@@ -125,7 +133,7 @@ const UsersView = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {users
+                                    {usersToDisplay
                                         .filter(user =>
                                             user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                             user.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -173,6 +181,21 @@ const UsersView = () => {
                                             />
                                         </div>
                                     ))}
+                                    {authenticatedUser.role === 'ADMIN' && (
+                                        <div className="col-md-6 col-lg-4 mb-3">
+                                            <label className="form-label">Rol</label>
+                                            <select
+                                                className="form-control"
+                                                name="role"
+                                                value={newUser.role}
+                                                onChange={handleInputChange}
+                                                required
+                                            >
+                                                <option value="USER">USER</option>
+                                                <option value="ADMIN">ADMIN</option>
+                                            </select>
+                                        </div>
+                                    )}
                                 </div>
                                 <button className="btn btn-primary" onClick={editingUser ? handleSaveEdit : handleCreateUser}>
                                     {editingUser ? "💾 Guardar Cambios" : "➕ Agregar Usuario"}
