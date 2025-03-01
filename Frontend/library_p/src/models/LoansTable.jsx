@@ -1,23 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_URL } from '../config';
+import { API_URL_LOAN } from '../config';
 
 const LoanTable = () => {
     const [loans, setLoans] = useState([]);
-    const [filteredLoans, setFilteredLoans] = useState([]);
+    const [filteredLoans, setFilteredLoans] = useState([]); // ✅ Asegurar que siempre es un array
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState(''); // Estado para el filtro
+    const [searchTerm, setSearchTerm] = useState('');
 
     // Cargar los préstamos
     useEffect(() => {
         const fetchLoans = async () => {
             try {
-                const response = await axios.get(`${API_URL}/loan/some-data`);
-                setLoans(response.data);
-                setFilteredLoans(response.data); // Establecer los préstamos filtrados
-                setLoading(false);
+                const response = await axios.get(`${API_URL_LOAN}/some-data`);
+                console.log("📋 Préstamos recibidos de la API:", response.data);
+
+                if (Array.isArray(response.data)) {
+                    setLoans(response.data);
+                    setFilteredLoans(response.data);
+                } else {
+                    console.error("⚠️ La API no devolvió un array:", response.data);
+                    setLoans([]);
+                    setFilteredLoans([]);
+                }
             } catch (error) {
-                console.error('Error al cargar los préstamos:', error);
+                console.error('❌ Error al cargar los préstamos:', error);
+                setLoans([]);
+                setFilteredLoans([]);
+            } finally {
                 setLoading(false);
             }
         };
@@ -26,39 +36,45 @@ const LoanTable = () => {
     }, []);
 
     // Filtrar los préstamos
-    const filterLoans = (term) => {
+    useEffect(() => {
+        if (!Array.isArray(loans)) {
+            setFilteredLoans([]);
+            return;
+        }
+
         const filtered = loans.filter(loan => {
-            // Convertir todos los campos a minúsculas y verificar si contienen el término de búsqueda
             const loanData = `${loan.codeUser} ${loan.user_name} ${loan.user_last_name} ${loan.codeBook} ${loan.author} ${loan.title} ${loan.acquisition_date} ${loan.date_of_devolution || ''}`;
-            return loanData.toLowerCase().includes(term.toLowerCase());
+            return loanData.toLowerCase().includes(searchTerm.toLowerCase());
         });
-        setFilteredLoans(filtered); // Actualizar la lista filtrada
-    };
+
+        setFilteredLoans(filtered);
+    }, [searchTerm, loans]); // ✅ Actualizar al cambiar `searchTerm` o `loans`
 
     // Manejar el cambio en el filtro de búsqueda
     const handleSearchChange = (e) => {
-        const { value } = e.target;
-        setSearchTerm(value);
-        filterLoans(value); // Filtrar préstamos cada vez que cambia el término de búsqueda
+        setSearchTerm(e.target.value);
     };
 
-    // Devolver un libro
-    const handleReturnBook = async (loanId, returnDate) => {
+    // 📌 Función para devolver un libro
+    const handleReturnBook = async (loanId) => {
+        const formattedDate = new Date().toISOString().split('T')[0]; // ✅ Formato `YYYY-MM-DD`
+
         try {
-            const response = await axios.put(`${API_URL}/loan/returned-book/${loanId}`, {
-                date_of_devolution: returnDate
+            const response = await axios.put(`${API_URL_LOAN}/returned-book/${loanId}`, {
+                date_of_devolution: formattedDate // ✅ Asegurar formato correcto
             });
 
             if (response.status === 200) {
-                // Actualizar la tabla tras devolver el libro
-                setLoans(loans.filter(loan => loan.id_loan !== loanId));
-                setFilteredLoans(filteredLoans.filter(loan => loan.id_loan !== loanId));
-                alert('Libro devuelto exitosamente');
+                // ✅ Actualizar lista eliminando el préstamo devuelto
+                const updatedLoans = loans.filter(loan => loan.id_loan !== loanId);
+                setLoans(updatedLoans);
+                setFilteredLoans(updatedLoans);
+                alert('📚 Libro devuelto exitosamente');
             } else {
-                alert('Error al devolver el libro');
+                alert('⚠️ Error al devolver el libro');
             }
         } catch (error) {
-            alert('Error al intentar devolver el libro');
+            alert('❌ Error al intentar devolver el libro');
             console.error(error);
         }
     };
@@ -77,6 +93,7 @@ const LoanTable = () => {
                         value={searchTerm}
                         onChange={handleSearchChange}
                     />
+                    
                     <table className="table table-bordered table-striped">
                         <thead>
                             <tr>
@@ -88,30 +105,38 @@ const LoanTable = () => {
                                 <th>Libro</th>
                                 <th>Adquisición</th>
                                 <th>Devolución</th>
-                                <th>Acciones</th> {/* Columna de acciones */}
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredLoans.map((loan) => (
-                                <tr key={loan.id_loan}>
-                                    <td>{loan.codeUser}</td>
-                                    <td>{loan.user_name}</td>
-                                    <td>{loan.user_last_name}</td>
-                                    <td>{loan.codeBook}</td>
-                                    <td>{loan.author}</td>
-                                    <td>{loan.title}</td>
-                                    <td>{loan.acquisition_date}</td>
-                                    <td>{loan.date_of_devolution || 'Pendiente'}</td>
-                                    <td>
-                                        <button
-                                            className="btn btn-danger"
-                                            onClick={() => handleReturnBook(loan.id_loan, new Date().toISOString())}
-                                        >
-                                            Devolver
-                                        </button>
+                            {filteredLoans.length > 0 ? (
+                                filteredLoans.map((loan) => (
+                                    <tr key={loan.id_loan}>
+                                        <td>{loan.codeUser}</td>
+                                        <td>{loan.user_name}</td>
+                                        <td>{loan.user_last_name}</td>
+                                        <td>{loan.codeBook}</td>
+                                        <td>{loan.author}</td>
+                                        <td>{loan.title}</td>
+                                        <td>{loan.acquisition_date}</td>
+                                        <td>{loan.date_of_devolution || 'Pendiente'}</td>
+                                        <td>
+                                            <button
+                                                className="btn btn-danger"
+                                                onClick={() => handleReturnBook(loan.id_loan)}
+                                            >
+                                                Devolver
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="9" className="text-center text-muted">
+                                        No hay préstamos disponibles.
                                     </td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 </div>

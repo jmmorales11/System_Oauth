@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_URL } from '../config';
+import { API_URL_USER } from '../config';
 
-const UsersTable = ({ onUserSelect }) => {  // Recibir la función como prop
-    const [users, setUsers] = useState([]); // Estado para almacenar los usuarios
-    const [loading, setLoading] = useState(true); // Estado para mostrar carga
-    const [searchTerm, setSearchTerm] = useState(''); // Estado para el término de búsqueda
-    const [selectedUser, setSelectedUser] = useState(null); // Estado para el usuario seleccionado
+const UsersTable = ({ onUserSelect }) => {
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedUser, setSelectedUser] = useState(null);
 
-    // Función para obtener los usuarios desde la API
     const fetchUsers = async () => {
         try {
-            const response = await axios.get(`${API_URL}/user/some-data`);
-            const userData = response.data;
+            const response = await axios.get(`${API_URL_USER}/some-data`);
+            const userData = Array.isArray(response.data) ? response.data : [];
             setUsers(userData);
             setLoading(false);
         } catch (error) {
@@ -21,30 +20,31 @@ const UsersTable = ({ onUserSelect }) => {  // Recibir la función como prop
         }
     };
 
-    // Llamada a la API cuando el componente se monta
     useEffect(() => {
         fetchUsers();
     }, []);
 
-    // Filtra los usuarios según el término de búsqueda
-    const filteredUsers = users.filter(user => {
+    const filteredUsers = (users || []).filter(user => {
         const lowercasedSearchTerm = searchTerm.toLowerCase();
         return (
-            user.id_user.toString().toLowerCase().includes(lowercasedSearchTerm) || 
-            user.user_name.toLowerCase().includes(lowercasedSearchTerm) || 
-            user.user_last_name.toLowerCase().includes(lowercasedSearchTerm) || 
-            user.code.toLowerCase().includes(lowercasedSearchTerm)
+            user?.id_user?.toString().toLowerCase().includes(lowercasedSearchTerm) || 
+            user?.first_name?.toLowerCase().includes(lowercasedSearchTerm) ||  // ← Corregido
+            user?.last_name?.toLowerCase().includes(lowercasedSearchTerm) ||  // ← Corregido
+            user?.code?.toLowerCase().includes(lowercasedSearchTerm)
         );
     });
 
-    // Maneja la selección de un usuario
+    useEffect(() => {
+        console.log("Usuarios cargados:", users);
+        console.log("Usuarios filtrados:", filteredUsers);
+    }, [users, filteredUsers]);
+
     const handleUserSelect = (user) => {
         setSelectedUser(user);
-        onUserSelect(user);  // Llamar a la función onUserSelect para pasar el usuario seleccionado
+        if (onUserSelect) onUserSelect(user);
         setSearchTerm('');
     };
 
-    // Maneja el cambio en el campo de búsqueda
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
         if (selectedUser) {
@@ -79,7 +79,7 @@ const UsersTable = ({ onUserSelect }) => {  // Recibir la función como prop
                                     style={{ cursor: 'pointer' }}
                                     onClick={() => handleUserSelect(user)}
                                 >
-                                    {user.code}  | {user.user_name} {user.user_last_name} 
+                                    {user.code} | {user.first_name} {user.last_name} {/* ← Corregido */}
                                 </li>
                             ))}
                         </ul>
@@ -98,7 +98,6 @@ const UsersTable = ({ onUserSelect }) => {  // Recibir la función como prop
                                         <th>Tipo de usuario</th>
                                         <th>Nombre</th>
                                         <th>Apellido</th>
-                                        <th>Grado</th>
                                         <th>Correo</th>
                                     </tr>
                                 </thead>
@@ -107,9 +106,8 @@ const UsersTable = ({ onUserSelect }) => {  // Recibir la función como prop
                                         <td>{selectedUser.id_user}</td>
                                         <td>{selectedUser.code}</td>
                                         <td>{selectedUser.role}</td>
-                                        <td>{selectedUser.user_name}</td>
-                                        <td>{selectedUser.user_last_name}</td>
-                                        <td>{selectedUser.grade}</td>
+                                        <td>{selectedUser.first_name}</td> {/* ← Corregido */}
+                                        <td>{selectedUser.last_name}</td>  {/* ← Corregido */}
                                         <td>{selectedUser.mail}</td>
                                     </tr>
                                 </tbody>

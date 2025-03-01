@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_URL } from '../config';
+import { API_URL_BOOK } from '../config';
 
 const BooksTable = ({ onBooksSelect }) => {
     const [books, setBooks] = useState([]);
@@ -8,29 +8,43 @@ const BooksTable = ({ onBooksSelect }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedBooks, setSelectedBooks] = useState([]);
 
+    // Función para obtener los libros desde la API
     const fetchBooks = async () => {
         try {
-            const response = await axios.get(`${API_URL}/book`);
-            setBooks(response.data);
+            const response = await axios.get(`${API_URL_BOOK}`);
+            console.log("📚 Libros recibidos de la API:", response.data); // 🔍 Log de depuración
+            if (Array.isArray(response.data)) {
+                setBooks(response.data);
+            } else {
+                console.error("⚠️ La API no devolvió un array:", response.data);
+                setBooks([]);
+            }
             setLoading(false);
         } catch (error) {
-            console.error('Error al cargar los libros:', error);
+            console.error('❌ Error al cargar los libros:', error);
             setLoading(false);
         }
     };
 
+    // Cargar los libros cuando el componente se monta
     useEffect(() => {
         fetchBooks();
     }, []);
 
-    const filteredBooks = books.filter(book =>
-        book.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        book.author.toLowerCase().includes(searchTerm.toLowerCase())
+    // Filtrar libros según el término de búsqueda
+    const filteredBooks = (books || []).filter(book =>
+        book?.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        book?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        book?.author?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    // Manejar la selección de libros
     const handleBookSelect = (book) => {
         setSelectedBooks(prevBooks => {
+            if (prevBooks.find(b => b.id_book === book.id_book)) {
+                console.warn("⚠️ El libro ya está seleccionado:", book);
+                return prevBooks;
+            }
             const newSelectedBooks = [...prevBooks, book];
             onBooksSelect(newSelectedBooks);
             return newSelectedBooks;
@@ -38,6 +52,7 @@ const BooksTable = ({ onBooksSelect }) => {
         setSearchTerm('');
     };
 
+    // Manejar la eliminación de un libro seleccionado
     const handleBookRemove = (bookId) => {
         setSelectedBooks(prevBooks => {
             const newSelectedBooks = prevBooks.filter(book => book.id_book !== bookId);
@@ -68,6 +83,11 @@ const BooksTable = ({ onBooksSelect }) => {
                         />
                     </div>
 
+                    {/* Verificar si la API devolvió libros antes de intentar mostrar */}
+                    {books.length === 0 && (
+                        <p className="text-center text-danger">⚠️ No hay libros disponibles.</p>
+                    )}
+
                     {searchTerm && filteredBooks.length > 0 && (
                         <ul className="list-group mb-4">
                             {filteredBooks.map((book) => (
@@ -77,7 +97,7 @@ const BooksTable = ({ onBooksSelect }) => {
                                     style={{ cursor: 'pointer' }}
                                     onClick={() => handleBookSelect(book)}
                                 >
-                                    {book.code} |   {book.title}
+                                    {book.code} | {book.title}
                                 </li>
                             ))}
                         </ul>
@@ -95,7 +115,7 @@ const BooksTable = ({ onBooksSelect }) => {
                                         <th>Autor</th>
                                         <th>Descripción</th>
                                         <th>Estado</th>
-                                        <th>Acciones</th> {/* Nueva columna */}
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -110,7 +130,7 @@ const BooksTable = ({ onBooksSelect }) => {
                                             <td>
                                                 <button
                                                     className="btn btn-danger"
-                                                    onClick={() => handleBookRemove(book.id_book)} // Eliminar el libro
+                                                    onClick={() => handleBookRemove(book.id_book)}
                                                 >
                                                     Eliminar
                                                 </button>

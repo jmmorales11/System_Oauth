@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaHome, FaBook, FaRecycle, FaEnvelope } from 'react-icons/fa'; // Importar íconos de react-icons
+import { FaHome, FaBook, FaRecycle, FaEnvelope, FaUser, FaBookOpen } from 'react-icons/fa'; // Importar íconos
 import "../style/Navbar.css";
 
 function Navbar() {
@@ -36,12 +36,12 @@ function Navbar() {
                 </div>
             </nav>
 
-            {/* Barra lateral de navegación debajo de la barra principal */}
+            {/* Barra lateral de navegación */}
             <nav className={`sidebar navbar navbar-expand-lg navbar-light bg-primary vh-100 d-flex flex-column align-items-start p-3 fixed-top ${isMenuOpen ? 'd-block' : 'd-none'} d-md-block`}>
                 {/* Título de la sección */}
                 <h1 className="text-white mb-5 d-none d-md-block">Biblioteca</h1>
 
-                {/* Enlaces alineados hacia arriba ocupando toda la altura */}
+                {/* Enlaces alineados */}
                 <div className={`navbar-collapse ${isMenuOpen ? 'd-block' : 'd-none'}`} id="navbarNav">
                     <ul className="navbar-nav flex-column">
                         <li className="nav-item">
@@ -59,6 +59,18 @@ function Navbar() {
                         <li className="nav-item">
                             <a className="nav-link text-white fw-bold" href="/devolver">
                                 <FaRecycle className="me-2" /> Devolución
+                            </a>
+                            <hr className="border-white" />
+                        </li>
+                        <li className="nav-item">
+                            <a className="nav-link text-white fw-bold" href="/usuarios">
+                                <FaUser className="me-2" /> Usuarios
+                            </a>
+                            <hr className="border-white" />
+                        </li>
+                        <li className="nav-item">
+                            <a className="nav-link text-white fw-bold" href="/libros">
+                                <FaBookOpen className="me-2" /> Libros
                             </a>
                             <hr className="border-white" />
                         </li>
