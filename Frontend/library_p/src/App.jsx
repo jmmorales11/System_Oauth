@@ -9,20 +9,24 @@ import BooksPage from './components/BooksPage';
 import UserPage from './components/UserPage';
 import Login from './components/Login';
 import Register from './components/Register';
-
 import PropTypes from 'prop-types';
 
-function PrivateRoute({ children}) {
+function PrivateRoute({ children, role }) {
   const { user, loading } = useContext(AuthContext);
+  const userRole = localStorage.getItem('user_role');
 
-    if (loading) return <div>Cargando sesión...</div>; // Evita redirección prematura
+  if (loading) return <div>Cargando sesión...</div>; // Evita redirección prematura
 
-    return user ? children : <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/login" replace />;
+
+  if (role && userRole !== role) return <Navigate to="/" replace />; // Redirección si el rol no coincide
+
+  return children;
 }
 
 PrivateRoute.propTypes = {
   children: PropTypes.node.isRequired,
-  roles: PropTypes.arrayOf(PropTypes.string)
+  role: PropTypes.string,
 };
 
 function App() {
@@ -33,12 +37,12 @@ function App() {
         <Routes>
           <Route index path="/login" element={user ? <Navigate to="/" /> : <Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/" element={<Home /> }/>
-          <Route path="/contacto" element={<Contact />} />
-          <Route path="/prestamos" element={<Loan />} />
-          <Route path="/devolver" element={<ReturnBook />} />
-          <Route path="/usuarios" element={<UserPage />} />
-          <Route path="/libros" element={<BooksPage />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/contacto" element={<PrivateRoute role="ADMIN"><Contact /></PrivateRoute>} />
+          <Route path="/prestamos" element={<PrivateRoute role="USER"><Loan /></PrivateRoute>} />
+          <Route path="/devolver" element={<PrivateRoute role="USER"><ReturnBook /></PrivateRoute>} />
+          <Route path="/usuarios" element={<PrivateRoute role="ADMIN"><UserPage /></PrivateRoute>} />
+          <Route path="/libros" element={<PrivateRoute role="USER"><BooksPage /></PrivateRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

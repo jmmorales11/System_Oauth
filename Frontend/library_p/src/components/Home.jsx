@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { jwtDecode } from "jwt-decode";
 import Footer from "./Footer";
 import Navbar from "./Navbar";
 import "../style/Footer.css";
@@ -7,6 +8,7 @@ import "../index.css";
 export default function Home() {
   const [authCode, setAuthCode] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -18,21 +20,23 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    // 2) Cuando tengamos un code, llamamos al endpoint /oauth2/token
-    if (authCode) {
-      // Aquí van tus datos de cliente
-      const clientId = "oauth-client";
+    const storedToken = localStorage.getItem("access_token");
+    const storedRole = localStorage.getItem("user_role");
+
+    const clientId = "oauth-client";
       const clientSecret = "12345678910";
       const redirectUri = "http://localhost:5173/"; // Debe coincidir con la que usaste
-
-      // Función asíncrona para pedir el token
+  
+    if (storedToken && storedRole) {
+      setAccessToken(storedToken);
+      setUserRole(storedRole);
+    } else if (authCode) {
       const fetchToken = async () => {
         try {
           const response = await fetch("http://localhost:9000/oauth2/token", {
             method: "POST",
             headers: {
               "Content-Type": "application/x-www-form-urlencoded",
-              // Autenticación tipo Basic Auth
               Authorization: "Basic " + btoa(clientId + ":" + clientSecret),
             },
             body: new URLSearchParams({
@@ -41,25 +45,25 @@ export default function Home() {
               redirect_uri: redirectUri,
             }),
           });
-
+  
           if (!response.ok) {
-            // Por ejemplo, si hay un error 400 o 401
-            const text = await response.text();
-            throw new Error(
-              `Error al obtener token. Status: ${response.status} - ${text}`
-            );
+            throw new Error(`Error al obtener token: ${response.statusText}`);
           }
-
+  
           const data = await response.json();
           setAccessToken(data.access_token);
+          setUserRole(jwtDecode(data.access_token).role);
+          localStorage.setItem("access_token", data.access_token);
+          localStorage.setItem("user_role", jwtDecode(data.access_token).role);
         } catch (err) {
           setError(err.message);
         }
       };
-
+  
       fetchToken();
     }
   }, [authCode]);
+  
 
   return (
     <>
@@ -79,6 +83,13 @@ export default function Home() {
           {accessToken && (
             <p>
               Tu Access Token es: <strong>{accessToken}</strong>
+            </p>
+          )}
+
+          {/* Mostramos el rol si ya lo obtuvimos */}
+          {userRole && (
+            <p>
+              Tu rol es: <strong>{userRole}</strong>
             </p>
           )}
 

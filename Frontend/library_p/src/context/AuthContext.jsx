@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { jwtDecode } from "jwt-decode";
 import { API_URL_USER } from '../config';
 
 export const AuthContext = createContext();
@@ -8,38 +9,28 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true); // Para evitar redirecciones incorrectas
+
   useEffect(() => {
     const checkUserSession = async () => {
-        const storedUser = localStorage.getItem('user');
-
-        if (storedUser) {
-            try {
-                const userData = JSON.parse(storedUser);
-                
-                // Evita actualizar el estado si el usuario ya está configurado
-                if (!user || user.id_user !== userData.id_user) {
-                    const response = await axios.get(`${API_URL_USER}/${userData.id_user}`);
-                    if (response.data && response.data.id_user === userData.id_user) {
-                        setUser(response.data);
-                    } else {
-                        localStorage.removeItem('user');
-                        setUser(null);
-                    }
-                }
-            } catch (error) {
-                console.error('Error validando sesión:', error);
-                localStorage.removeItem('user');
-                setUser(null);
-            }
-        } else {
-            setUser(null);
+      const storedToken = localStorage.getItem('access_token');
+      if (storedToken) {
+        try {
+          const decodedToken = jwtDecode(storedToken);
+          setUser({ token: storedToken, role: decodedToken.role });
+        } catch (error) {
+          console.error('Error validando sesión:', error);
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('user_role');
+          setUser(null);
         }
-        setLoading(false);
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
     };
 
     checkUserSession();
-}, []); // 🚀 Se ejecuta solo una vez al montar el componente
-
+  }, []); // 🚀 Se ejecuta solo una vez al montar el componente
 
   const login = async (username, password) => {
     try {
@@ -48,8 +39,10 @@ export const AuthProvider = ({ children }) => {
         password: password,
       });
       const userData = response.data;
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
+      const decodedToken = jwtDecode(userData.access_token);
+      setUser({ token: userData.access_token, role: decodedToken.role });
+      localStorage.setItem('access_token', userData.access_token);
+      localStorage.setItem('user_role', decodedToken.role);
       setError(null);
     } catch (error) {
       setError('Credenciales inválidas');
@@ -59,7 +52,8 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('user');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user_role');
   };
 
   if (loading) return <div>Cargando sesión...</div>;

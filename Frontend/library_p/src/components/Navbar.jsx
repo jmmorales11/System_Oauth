@@ -1,57 +1,56 @@
-import { useState, useContext, useEffect } from "react";
-import { useNavigate } from 'react-router-dom';
-import { FaHome, FaBook, FaRecycle, FaEnvelope, FaUser, FaBookOpen, FaSignOutAlt } from 'react-icons/fa'; // Importar íconos
+import { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { 
+    FaHome, FaBook, FaRecycle, FaEnvelope, 
+    FaUser, FaBookOpen, FaSignOutAlt 
+} from "react-icons/fa"; 
 import "../style/Navbar.css";
-import { AuthContext } from '../context/AuthContext'; 
+import { AuthContext } from "../context/AuthContext";
 
 function Navbar() {
-    // Estado para controlar la visibilidad del menú
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [userRole, setUserRole] = useState(null);
     const { logout } = useContext(AuthContext);
     const navigate = useNavigate();
 
-    // Función para alternar el estado del menú
+    // Obtener el rol del usuario desde localStorage
+    useEffect(() => {
+        const storedRole = localStorage.getItem("user_role");
+        setUserRole(storedRole);
+    }, []);
+
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
     };
 
     const handleLogout = () => {
-        logout();  
-        navigate('/login', { replace: true });
+        logout();
+        navigate("/login", { replace: true });
         window.location.reload();
     };
 
     return (
         <div className="layout">
-            {/* Título en la parte superior */}
+            {/* Navbar superior */}
             <nav className="navbar navbar-light bg-primary text-center py-2 w-100 top-navbar">
                 <div className="container d-flex justify-content-between align-items-center">
-                    {/* Ícono de hamburguesa a la izquierda */}
                     <button 
                         className="navbar-toggler border-0 d-lg-none" 
                         type="button" 
-                        onClick={toggleMenu} // Cambiar el estado al hacer clic
-                        aria-expanded={isMenuOpen ? "true" : "false"} // Cambiar el estado de expansión
+                        onClick={toggleMenu} 
+                        aria-expanded={isMenuOpen ? "true" : "false"} 
                         aria-label="Toggle navigation"
                     >
                         <i className="bi bi-list text-white fs-3"></i>
                     </button>
-
-                    {/* Logo a la derecha con un margen extra */}
-                    <img 
-                        src="/img/logo_lr.png" 
-                        alt="Logo" 
-                        className="logo ms-auto me-1"
-                    />
+                    <img src="/img/logo_lr.png" alt="Logo" className="logo ms-auto me-1"/>
                 </div>
             </nav>
 
-            {/* Barra lateral de navegación */}
+            {/* Sidebar */}
             <nav className={`sidebar navbar navbar-expand-lg navbar-light bg-primary vh-100 d-flex flex-column align-items-start p-3 fixed-top ${isMenuOpen ? 'd-block' : 'd-none'} d-md-block`}>
-                {/* Título de la sección */}
                 <h1 className="text-white mb-5 d-none d-md-block">Biblioteca</h1>
 
-                {/* Enlaces alineados */}
                 <div className={`navbar-collapse ${isMenuOpen ? 'd-block' : 'd-none'}`} id="navbarNav">
                     <ul className="navbar-nav flex-column">
                         <li className="nav-item">
@@ -60,36 +59,51 @@ function Navbar() {
                             </a>
                             <hr className="border-white" />
                         </li>
-                        <li className="nav-item">
-                            <a className="nav-link text-white fw-bold" href="/prestamos">
-                                <FaBook className="me-2" /> Préstamo
-                            </a>
-                            <hr className="border-white" />
-                        </li>
-                        <li className="nav-item">
-                            <a className="nav-link text-white fw-bold" href="/devolver">
-                                <FaRecycle className="me-2" /> Devolución
-                            </a>
-                            <hr className="border-white" />
-                        </li>
-                        <li className="nav-item">
-                            <a className="nav-link text-white fw-bold" href="/usuarios">
-                                <FaUser className="me-2" /> Usuarios
-                            </a>
-                            <hr className="border-white" />
-                        </li>
-                        <li className="nav-item">
-                            <a className="nav-link text-white fw-bold" href="/libros">
-                                <FaBookOpen className="me-2" /> Libros
-                            </a>
-                            <hr className="border-white" />
-                        </li>
-                        <li className="nav-item">
-                            <a className="nav-link text-white fw-bold" href="/contacto">
-                                <FaEnvelope className="me-2" /> Contacto
-                            </a>
-                            <hr className="border-white" />
-                        </li>
+
+                        {/* Solo visible para ADMIN */}
+                        {userRole === "ADMIN" && (
+                            <>
+                                <li className="nav-item">
+                                    <a className="nav-link text-white fw-bold" href="/usuarios">
+                                        <FaUser className="me-2" /> Usuarios
+                                    </a>
+                                    <hr className="border-white" />
+                                </li>
+                                <li className="nav-item">
+                                    <a className="nav-link text-white fw-bold" href="/contacto">
+                                        <FaEnvelope className="me-2" /> Contacto
+                                    </a>
+                                    <hr className="border-white" />
+                                </li>
+                            </>
+                        )}
+
+                        {/* Solo visible para USER */}
+                        {userRole === "USER" && (
+                            <>
+                                <li className="nav-item">
+                                    <a className="nav-link text-white fw-bold" href="/devolver">
+                                        <FaRecycle className="me-2" /> Devolución
+                                    </a>
+                                    <hr className="border-white" />
+                                </li>
+                                <li className="nav-item">
+                                    <a className="nav-link text-white fw-bold" href="/prestamos">
+                                        <FaBook className="me-2" /> Préstamo
+                                    </a>
+                                    <hr className="border-white" />
+                                </li>
+                                <li className="nav-item">
+                                    <a className="nav-link text-white fw-bold" href="/libros">
+                                        <FaBookOpen className="me-2" /> Libros
+                                    </a>
+                                    <hr className="border-white" />
+                                </li>
+                            </>
+                        )}
+
+                        {/* Visible para todos los roles */}
+                        
                         <li className="nav-item">
                             <button className="nav-link text-white fw-bold btn btn-link" onClick={handleLogout}>
                                 <FaSignOutAlt className="me-2" /> Salir
