@@ -33,12 +33,12 @@ function App() {
         <Routes>
           <Route index path="/login" element={user ? <Navigate to="/" /> : <Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/" element={<PrivateRoute roles={['ADMIN', 'USER']}><Home /></PrivateRoute>} />
-          <Route path="/contacto" element={<PrivateRoute roles={['ADMIN', 'USER']}><Contact /></PrivateRoute>} />
-          <Route path="/prestamos" element={<PrivateRoute roles={['ADMIN', 'USER']}><Loan /></PrivateRoute>} />
-          <Route path="/devolver" element={<PrivateRoute roles={['ADMIN', 'USER']}><ReturnBook /></PrivateRoute>} />
-          <Route path="/usuarios" element={<PrivateRoute roles={['ADMIN', 'USER']}><UserPage /></PrivateRoute>} />
-          <Route path="/libros" element={<PrivateRoute roles={['ADMIN', 'USER']}><BooksPage /></PrivateRoute>} />
+          <Route path="/" element={<Home /> }/>
+          <Route path="/contacto" element={<Contact />} />
+          <Route path="/prestamos" element={<Loan />} />
+          <Route path="/devolver" element={<ReturnBook />} />
+          <Route path="/usuarios" element={<UserPage />} />
+          <Route path="/libros" element={<BooksPage />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
