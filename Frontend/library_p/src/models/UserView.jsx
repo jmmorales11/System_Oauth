@@ -18,11 +18,27 @@ const UsersView = () => {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await axios.get(API_URL_USER);
-                console.log("👤 Usuarios recibidos de la API:", response.data);
+                const userRole = localStorage.getItem('user_role');
+                const userId = localStorage.getItem('user_id');
+                let response;
 
-                // Asegurar que `users` es un array dentro del objeto recibido
-                setUsers(Array.isArray(response.data.users) ? response.data.users : []);
+                if (userRole === 'ADMIN') {
+                    response = await axios.get(`${API_URL_USER}/some-data`, {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('access_token')}`
+                        }
+                    });
+                } else {
+                    response = await axios.get(`${API_URL_USER}/${userId}`, {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem('access_token')}`
+                        }
+                    });
+                }
+
+                const userData = Array.isArray(response.data) ? response.data : [response.data];
+                setUsers(userData);
+                console.log("Usuarios obtenidos:", userData); // Agregar console.log para verificar los registros
             } catch (error) {
                 console.error('❌ Error al cargar los usuarios:', error);
             } finally {
@@ -41,7 +57,11 @@ const UsersView = () => {
     // Crear nuevo usuario
     const handleCreateUser = async () => {
         try {
-            const response = await axios.post(`${API_URL_USER}/register-user`, newUser);
+            const response = await axios.post(`${API_URL_USER}/register-user`, newUser, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('access_token')}`
+                }
+            });
             setUsers([...users, response.data]); // Agregar usuario a la tabla
             alert("👤 Usuario agregado correctamente.");
             setNewUser({ first_name: '', last_name: '', mail: '', password: '', code: '', role: 'USER' });
@@ -67,7 +87,11 @@ const UsersView = () => {
     // Guardar edición
     const handleSaveEdit = async () => {
         try {
-            const response = await axios.put(`${API_URL_USER}/update-user/${editingUser.id_user}`, newUser);
+            const response = await axios.put(`${API_URL_USER}/update-user/${editingUser.id_user}`, newUser, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('access_token')}`
+                }
+            });
             setUsers(users.map(user => (user.id_user === editingUser.id_user ? response.data : user)));
             alert("✅ Usuario actualizado correctamente.");
             setEditingUser(null);
@@ -80,7 +104,8 @@ const UsersView = () => {
     };
 
     // Filtrar usuarios según el rol del usuario autenticado
-    const usersToDisplay = authenticatedUser.role === 'ADMIN' ? users : users.filter(user => user.id_user === authenticatedUser.id_user);
+    const userId = localStorage.getItem('user_id');
+    const usersToDisplay = authenticatedUser.role === 'ADMIN' ? users : users.filter(user => user.id_user === parseInt(userId));
 
     return (
         <div className="container-fluid mt-4">
@@ -135,9 +160,9 @@ const UsersView = () => {
                                 <tbody>
                                     {usersToDisplay
                                         .filter(user =>
-                                            user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                            user.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                            user.mail.toLowerCase().includes(searchTerm.toLowerCase())
+                                            (user.first_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                            (user.last_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                            (user.mail || '').toLowerCase().includes(searchTerm.toLowerCase())
                                         )
                                         .map((user) => (
                                             <tr key={user.id_user}>

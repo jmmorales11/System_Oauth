@@ -14,12 +14,13 @@ import PropTypes from 'prop-types';
 function PrivateRoute({ children, role }) {
   const { user, loading } = useContext(AuthContext);
   const userRole = localStorage.getItem('user_role');
+  const roles = ['USER', 'ADMIN']; // Define the roles array
 
   if (loading) return <div>Cargando sesión...</div>; // Evita redirección prematura
 
   if (!user) return <Navigate to="/login" replace />;
 
-  if (role && userRole !== role) return <Navigate to="/" replace />; // Redirección si el rol no coincide
+  if (role && !roles.includes(userRole)) return <Navigate to="/" replace />; // Redirección si el rol no coincide
 
   return children;
 }
@@ -38,11 +39,11 @@ function App() {
           <Route index path="/login" element={user ? <Navigate to="/" /> : <Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/" element={<Home />} />
-          <Route path="/contacto" element={<PrivateRoute role="ADMIN"><Contact /></PrivateRoute>} />
-          <Route path="/prestamos" element={<PrivateRoute role="USER"><Loan /></PrivateRoute>} />
-          <Route path="/devolver" element={<PrivateRoute role="USER"><ReturnBook /></PrivateRoute>} />
-          <Route path="/usuarios" element={<PrivateRoute role="ADMIN"><UserPage /></PrivateRoute>} />
-          <Route path="/libros" element={<PrivateRoute role="USER"><BooksPage /></PrivateRoute>} />
+          <Route path="/contacto" element={<PrivateRoute role={['USER', 'ADMIN']}><Contact /></PrivateRoute>} />
+          <Route path="/prestamos" element={<PrivateRoute role={['USER', 'ADMIN']}><Loan /></PrivateRoute>} />
+          <Route path="/devolver" element={<PrivateRoute role={['USER', 'ADMIN']}><ReturnBook /></PrivateRoute>} />
+          <Route path="/usuarios" element={<PrivateRoute role={['USER', 'ADMIN']}><UserPage /></PrivateRoute>} />
+          <Route path="/libros" element={<PrivateRoute role={['USER', 'ADMIN']}><BooksPage /></PrivateRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

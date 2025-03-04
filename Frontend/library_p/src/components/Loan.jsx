@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import UsersTable from "../models/UsersTable";
@@ -11,6 +11,17 @@ export default function Loan() {
     const [selectedBooks, setSelectedBooks] = useState([]);
     const [loanDate, setLoanDate] = useState('');
     const [returnDate, setReturnDate] = useState('');
+    const [userRole, setUserRole] = useState('');
+
+    useEffect(() => {
+        const role = localStorage.getItem('user_role');
+        const userId = localStorage.getItem('user_id');
+        setUserRole(role);
+
+        if (role === 'USER') {
+            setSelectedUser({ id_user: parseInt(userId) });
+        }
+    }, []);
 
     const handleUserSelect = (user) => {
         setSelectedUser(user);
@@ -41,12 +52,13 @@ export default function Loan() {
         }
 
         const formattedReturnDate = new Date(returnDate).toISOString().split('T')[0];
+        const token = localStorage.getItem('access_token'); // Obtener el token del localStorage
 
         for (const book of selectedBooks) {
             const loanData = {
                 userId: selectedUser.id_user, 
-                bookId: book.id_book, // ✅ Corrección del campo
-                dateOfDevolution: formattedReturnDate // ✅ Corrección del campo
+                bookId: book.id_book,
+                dateOfDevolution: formattedReturnDate
             };
 
             console.log("Enviando solicitud con:", JSON.stringify(loanData, null, 2));
@@ -55,12 +67,12 @@ export default function Loan() {
                 const response = await fetch(`${API_URL_LOAN}`, {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}` // Incluir el token en los encabezados
                     },
                     body: JSON.stringify(loanData)
                 });
 
-                // ⚠️ Verifica si la respuesta es JSON antes de parsearla
                 const textResponse = await response.text();
                 console.log("Respuesta completa del servidor:", textResponse);
 
@@ -69,7 +81,7 @@ export default function Loan() {
                     data = JSON.parse(textResponse);
                 } catch (parseError) {
                     console.error("Error al analizar la respuesta como JSON:", parseError);
-                    alert("Error inesperado en la respuesta del servidor.");
+                    alert("El libro ya no se encuentra disponible para préstamo");
                     return;
                 }
 
@@ -95,7 +107,7 @@ export default function Loan() {
                     <h1 className="text-center">Préstamo</h1>
 
                     <DateDisplay onDateChange={handleDateChange} />
-                    <UsersTable onUserSelect={handleUserSelect} />
+                    {userRole === 'ADMIN' && <UsersTable onUserSelect={handleUserSelect} />}
                     <BooksTable onBooksSelect={handleBooksSelect} />
 
                     <button className="btn btn-primary mt-3" onClick={requestLoan}>

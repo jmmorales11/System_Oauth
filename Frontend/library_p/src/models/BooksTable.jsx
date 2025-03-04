@@ -8,10 +8,17 @@ const BooksTable = ({ onBooksSelect }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedBooks, setSelectedBooks] = useState([]);
 
+    // Obtener el rol del usuario desde el localStorage
+    const userRole = localStorage.getItem('user_role');
+
     // Función para obtener los libros desde la API
     const fetchBooks = async () => {
         try {
-            const response = await axios.get(`${API_URL_BOOK}`);
+            const response = await axios.get(`${API_URL_BOOK}`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('access_token')}`
+                }
+            });
             console.log("📚 Libros recibidos de la API:", response.data); // 🔍 Log de depuración
             if (Array.isArray(response.data)) {
                 setBooks(response.data);

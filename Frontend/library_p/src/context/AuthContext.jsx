@@ -43,6 +43,7 @@ export const AuthProvider = ({ children }) => {
       setUser({ token: userData.access_token, role: decodedToken.role });
       localStorage.setItem('access_token', userData.access_token);
       localStorage.setItem('user_role', decodedToken.role);
+      localStorage.setItem('user_id', decodedToken.user_id);
       setError(null);
     } catch (error) {
       setError('Credenciales inválidas');
@@ -54,6 +55,7 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     localStorage.removeItem('access_token');
     localStorage.removeItem('user_role');
+    localStorage.removeItem('user_id');
   };
 
   if (loading) return <div>Cargando sesión...</div>;

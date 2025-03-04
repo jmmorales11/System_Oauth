@@ -13,10 +13,17 @@ const BooksView = () => {
         physical_state: '', price: '', status: true 
     });
 
+    // Obtener el rol del usuario desde el localStorage
+    const userRole = localStorage.getItem('user_role');
+
     useEffect(() => {
         const fetchBooks = async () => {
             try {
-                const response = await axios.get(API_URL_BOOK);
+                const response = await axios.get(API_URL_BOOK, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('access_token')}`
+                    }
+                });
                 console.log("📚 Libros recibidos de la API:", response.data);
                 setBooks(Array.isArray(response.data) ? response.data : []);
             } catch (error) {
@@ -35,7 +42,11 @@ const BooksView = () => {
 
     const handleCreateBook = async () => {
         try {
-            const response = await axios.post(API_URL_BOOK, newBook);
+            const response = await axios.post(API_URL_BOOK, newBook, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('access_token')}`
+                }
+            });
             setBooks([...books, response.data]);
             alert("📘 Libro agregado correctamente.");
             setNewBook({ title: '', author: '', language: '', code: '', description: '', physical_state: '', price: '', status: true });
@@ -59,7 +70,11 @@ const BooksView = () => {
 
     const handleSaveEdit = async () => {
         try {
-            const response = await axios.put(`${API_URL_BOOK}/update/${editingBook.id_book}`, newBook);
+            const response = await axios.put(`${API_URL_BOOK}/update/${editingBook.id_book}`, newBook, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('access_token')}`
+                }
+            });
             setBooks(books.map(book => (book.id_book === editingBook.id_book ? response.data : book)));
             alert("📗 Libro actualizado correctamente.");
             setEditingBook(null);
@@ -88,19 +103,21 @@ const BooksView = () => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
 
-                        <button 
-                            className="btn btn-success mb-3" 
-                            onClick={() => {
-                                if (showForm && !editingBook) {
-                                    setShowForm(false);
-                                } else {
-                                    setEditingBook(null);
-                                    setNewBook({ title: '', author: '', language: '', code: '', description: '', physical_state: '', price: '', status: true });
-                                    setShowForm(true);
-                                }
-                            }}>
-                            {showForm && !editingBook ? "❌ Cerrar Formulario" : "➕ Agregar Libro"}
-                        </button>
+                        {userRole === 'ADMIN' && (
+                            <button 
+                                className="btn btn-success mb-3" 
+                                onClick={() => {
+                                    if (showForm && !editingBook) {
+                                        setShowForm(false);
+                                    } else {
+                                        setEditingBook(null);
+                                        setNewBook({ title: '', author: '', language: '', code: '', description: '', physical_state: '', price: '', status: true });
+                                        setShowForm(true);
+                                    }
+                                }}>
+                                {showForm && !editingBook ? "❌ Cerrar Formulario" : "➕ Agregar Libro"}
+                            </button>
+                        )}
 
                         <div className="table-responsive">
                             <table className="table table-bordered table-striped">
@@ -139,9 +156,11 @@ const BooksView = () => {
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <button className="btn btn-warning me-2 mb-1" onClick={() => handleEditBook(book)}>
-                                                        {editingBook?.id_book === book.id_book ? "❌ Cerrar Edición" : "✏️ Editar"}
-                                                    </button>
+                                                    {userRole === 'ADMIN' && (
+                                                        <button className="btn btn-warning me-2 mb-1" onClick={() => handleEditBook(book)}>
+                                                            {editingBook?.id_book === book.id_book ? "❌ Cerrar Edición" : "✏️ Editar"}
+                                                        </button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
@@ -149,7 +168,7 @@ const BooksView = () => {
                             </table>
                         </div>
 
-                        {showForm && (
+                        {showForm && userRole === 'ADMIN' && (
                             <div className="card p-4">
                                 <h3>{editingBook ? "✏️ Editar Libro" : "➕ Agregar Libro"}</h3>
                                 <div className="row">

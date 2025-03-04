@@ -4,25 +4,35 @@ import { API_URL_LOAN } from '../config';
 
 const LoanTable = () => {
     const [loans, setLoans] = useState([]);
-    const [filteredLoans, setFilteredLoans] = useState([]); // ✅ Asegurar que siempre es un array
+    const [filteredLoans, setFilteredLoans] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Cargar los préstamos
+    // Obtener datos del usuario desde el localStorage
+    const userRole = localStorage.getItem('user_role');
+    const userId = localStorage.getItem('user_id');
+
+    // Cargar los préstamos según el rol
     useEffect(() => {
         const fetchLoans = async () => {
             try {
-                const response = await axios.get(`${API_URL_LOAN}/some-data`);
-                console.log("📋 Préstamos recibidos de la API:", response.data);
-
-                if (Array.isArray(response.data)) {
-                    setLoans(response.data);
-                    setFilteredLoans(response.data);
+                let response;
+                if (userRole === 'ADMIN') {
+                    response = await axios.get(`${API_URL_LOAN}/some-data`, {
+                        headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` }
+                    });
                 } else {
-                    console.error("⚠️ La API no devolvió un array:", response.data);
-                    setLoans([]);
-                    setFilteredLoans([]);
+                    response = await axios.get(`${API_URL_LOAN}/some-data/${userId}`, {
+                        headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` }
+                    });
                 }
+
+                console.log("📋 Préstamos recibidos:", response.data);
+
+                const data = Array.isArray(response.data) ? response.data : [response.data];
+                const filteredData = data.filter(loan => !loan.confirm_devolution);
+                setLoans(filteredData);
+                setFilteredLoans(filteredData);
             } catch (error) {
                 console.error('❌ Error al cargar los préstamos:', error);
                 setLoans([]);
@@ -33,39 +43,36 @@ const LoanTable = () => {
         };
 
         fetchLoans();
-    }, []);
+    }, [userRole, userId]);
 
-    // Filtrar los préstamos
+    // Filtrar préstamos (solo para ADMIN)
     useEffect(() => {
-        if (!Array.isArray(loans)) {
-            setFilteredLoans([]);
-            return;
+        if (userRole === 'ADMIN') {
+            const filtered = loans.filter(loan => {
+                const loanData = `${loan.codeUser} ${loan.user_name} ${loan.user_last_name} ${loan.codeBook} ${loan.author} ${loan.title} ${loan.acquisition_date} ${loan.date_of_devolution || ''}`;
+                return loanData.toLowerCase().includes(searchTerm.toLowerCase());
+            });
+            setFilteredLoans(filtered);
         }
+    }, [searchTerm, loans, userRole]);
 
-        const filtered = loans.filter(loan => {
-            const loanData = `${loan.codeUser} ${loan.user_name} ${loan.user_last_name} ${loan.codeBook} ${loan.author} ${loan.title} ${loan.acquisition_date} ${loan.date_of_devolution || ''}`;
-            return loanData.toLowerCase().includes(searchTerm.toLowerCase());
-        });
-
-        setFilteredLoans(filtered);
-    }, [searchTerm, loans]); // ✅ Actualizar al cambiar `searchTerm` o `loans`
-
-    // Manejar el cambio en el filtro de búsqueda
+    // Manejar cambio en el filtro de búsqueda
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
     };
 
-    // 📌 Función para devolver un libro
+    // Devolver un libro
     const handleReturnBook = async (loanId) => {
-        const formattedDate = new Date().toISOString().split('T')[0]; // ✅ Formato `YYYY-MM-DD`
+        const formattedDate = new Date().toISOString().split('T')[0];
 
         try {
             const response = await axios.put(`${API_URL_LOAN}/returned-book/${loanId}`, {
-                date_of_devolution: formattedDate // ✅ Asegurar formato correcto
+                date_of_devolution: formattedDate
+            }, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` }
             });
 
             if (response.status === 200) {
-                // ✅ Actualizar lista eliminando el préstamo devuelto
                 const updatedLoans = loans.filter(loan => loan.id_loan !== loanId);
                 setLoans(updatedLoans);
                 setFilteredLoans(updatedLoans);
@@ -85,15 +92,17 @@ const LoanTable = () => {
                 <p className="text-center">Cargando préstamos...</p>
             ) : (
                 <div>
-                    {/* Filtro de búsqueda */}
-                    <input
-                        type="text"
-                        className="form-control mb-3"
-                        placeholder="Buscar por Cédula, Nombre, Libro..."
-                        value={searchTerm}
-                        onChange={handleSearchChange}
-                    />
-                    
+                    {/* Filtro de búsqueda solo para ADMIN */}
+                    {userRole === 'ADMIN' && (
+                        <input
+                            type="text"
+                            className="form-control mb-3"
+                            placeholder="Buscar por Cédula, Nombre, Libro..."
+                            value={searchTerm}
+                            onChange={handleSearchChange}
+                        />
+                    )}
+
                     <table className="table table-bordered table-striped">
                         <thead>
                             <tr>

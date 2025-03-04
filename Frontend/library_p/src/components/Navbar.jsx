@@ -59,51 +59,36 @@ function Navbar() {
                             </a>
                             <hr className="border-white" />
                         </li>
-
-                        {/* Solo visible para ADMIN */}
-                        {userRole === "ADMIN" && (
-                            <>
-                                <li className="nav-item">
-                                    <a className="nav-link text-white fw-bold" href="/usuarios">
-                                        <FaUser className="me-2" /> Usuarios
-                                    </a>
-                                    <hr className="border-white" />
-                                </li>
-                                <li className="nav-item">
-                                    <a className="nav-link text-white fw-bold" href="/contacto">
-                                        <FaEnvelope className="me-2" /> Contacto
-                                    </a>
-                                    <hr className="border-white" />
-                                </li>
-                            </>
-                        )}
-
-                        {/* Solo visible para USER */}
-                        {userRole === "USER" && (
-                            <>
-                                <li className="nav-item">
-                                    <a className="nav-link text-white fw-bold" href="/devolver">
-                                        <FaRecycle className="me-2" /> Devolución
-                                    </a>
-                                    <hr className="border-white" />
-                                </li>
-                                <li className="nav-item">
-                                    <a className="nav-link text-white fw-bold" href="/prestamos">
-                                        <FaBook className="me-2" /> Préstamo
-                                    </a>
-                                    <hr className="border-white" />
-                                </li>
-                                <li className="nav-item">
-                                    <a className="nav-link text-white fw-bold" href="/libros">
-                                        <FaBookOpen className="me-2" /> Libros
-                                    </a>
-                                    <hr className="border-white" />
-                                </li>
-                            </>
-                        )}
-
-                        {/* Visible para todos los roles */}
-                        
+                            <li className="nav-item">
+                                <a className="nav-link text-white fw-bold" href="/usuarios">
+                                    <FaUser className="me-2" /> Usuarios
+                                </a>
+                                <hr className="border-white" />
+                            </li>
+                        <li className="nav-item">
+                            <a className="nav-link text-white fw-bold" href="/contacto">
+                                <FaEnvelope className="me-2" /> Contacto
+                            </a>
+                            <hr className="border-white" />
+                        </li>
+                        <li className="nav-item">
+                            <a className="nav-link text-white fw-bold" href="/devolver">
+                                <FaRecycle className="me-2" /> Devolución
+                            </a>
+                            <hr className="border-white" />
+                        </li>
+                        <li className="nav-item">
+                            <a className="nav-link text-white fw-bold" href="/prestamos">
+                                <FaBook className="me-2" /> Préstamo
+                            </a>
+                            <hr className="border-white" />
+                        </li>
+                        <li className="nav-item">
+                            <a className="nav-link text-white fw-bold" href="/libros">
+                                <FaBookOpen className="me-2" /> Libros
+                            </a>
+                            <hr className="border-white" />
+                        </li>
                         <li className="nav-item">
                             <button className="nav-link text-white fw-bold btn btn-link" onClick={handleLogout}>
                                 <FaSignOutAlt className="me-2" /> Salir

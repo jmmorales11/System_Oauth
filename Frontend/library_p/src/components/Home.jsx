@@ -9,6 +9,7 @@ export default function Home() {
   const [authCode, setAuthCode] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
   const [userRole, setUserRole] = useState(null);
+  const [userId, setUserId] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -22,14 +23,16 @@ export default function Home() {
   useEffect(() => {
     const storedToken = localStorage.getItem("access_token");
     const storedRole = localStorage.getItem("user_role");
+    const storedUserId = localStorage.getItem("user_id");
 
     const clientId = "oauth-client";
       const clientSecret = "12345678910";
       const redirectUri = "http://localhost:5173/"; // Debe coincidir con la que usaste
   
-    if (storedToken && storedRole) {
+    if (storedToken && storedRole  && storedUserId) {
       setAccessToken(storedToken);
       setUserRole(storedRole);
+      setUserId(storedUserId);
     } else if (authCode) {
       const fetchToken = async () => {
         try {
@@ -53,8 +56,10 @@ export default function Home() {
           const data = await response.json();
           setAccessToken(data.access_token);
           setUserRole(jwtDecode(data.access_token).role);
+          setUserId(jwtDecode(data.access_token).user_id);
           localStorage.setItem("access_token", data.access_token);
           localStorage.setItem("user_role", jwtDecode(data.access_token).role);
+          localStorage.setItem("user_id", jwtDecode(data.access_token).user_id);
         } catch (err) {
           setError(err.message);
         }
@@ -90,6 +95,13 @@ export default function Home() {
           {userRole && (
             <p>
               Tu rol es: <strong>{userRole}</strong>
+            </p>
+          )}
+
+          {/* Mostramos el user_id si ya lo obtuvimos */}
+          {userId && (
+            <p>
+              Tu ID de usuario es: <strong>{userId}</strong>
             </p>
           )}
 
