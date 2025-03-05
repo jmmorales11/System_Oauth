@@ -75,40 +75,18 @@ export default function Home() {
       <div id="root">
         <Navbar />
         <div className="page">
-          <h1>Página Home</h1>
-
-          {/* Mostramos el code si existe */}
-          {authCode && (
-            <p>
-              El código de autorización es: <strong>{authCode}</strong>
-            </p>
-          )}
-
-          {/* Mostramos el token si ya lo obtuvimos */}
-          {accessToken && (
-            <p>
-              Tu Access Token es: <strong>{accessToken}</strong>
-            </p>
-          )}
-
-          {/* Mostramos el rol si ya lo obtuvimos */}
-          {userRole && (
-            <p>
-              Tu rol es: <strong>{userRole}</strong>
-            </p>
-          )}
-
-          {/* Mostramos el user_id si ya lo obtuvimos */}
-          {userId && (
-            <p>
-              Tu ID de usuario es: <strong>{userId}</strong>
-            </p>
-          )}
-
-          {/* Mostramos error si hay alguno */}
-          {error && (
-            <p style={{ color: "red" }}>Ocurrió un error: {error}</p>
-          )}
+          <div className="container mt-5">
+            <div className="jumbotron text-center">
+              <h1 className="display-4">¡Bienvenido a la Biblioteca!</h1>
+              {userRole && (
+                <p className="lead">
+                  Gracias por ingresar al sistema. Has iniciado sesión como {userRole === 'ADMIN' ? 'Administrador' : 'Usuario'}.
+                </p>
+              )}
+              <hr className="my-4" />
+              <p>Utiliza la barra de navegación para acceder a las diferentes funcionalidades del sistema.</p>
+            </div>
+          </div>
         </div>
         <Footer />
       </div>
