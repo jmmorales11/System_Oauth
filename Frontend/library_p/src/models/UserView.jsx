@@ -109,9 +109,9 @@ const UsersView = () => {
                         minlength: "La contraseña debe tener al menos 8 caracteres"
                     },
                     code: {
-                        required: "Por favor ingrese la cédula",
-                        minlength: "La cédula debe tener exactamente 10 caracteres",
-                        maxlength: "La cédula debe tener exactamente 10 caracteres"
+                        required: "Por favor ingrese la código",
+                        minlength: "El código debe tener exactamente 10 caracteres",
+                        maxlength: "El código debe tener exactamente 10 caracteres"
                     }
                 },
                 errorElement: "div",
