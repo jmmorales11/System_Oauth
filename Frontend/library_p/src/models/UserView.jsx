@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
 import { API_URL_USER } from '../config';
 import { AuthContext } from '../context/AuthContext';
+import $ from 'jquery';
+import 'jquery-validation';
 
 const UsersView = () => {
     const { user: authenticatedUser } = useContext(AuthContext);
@@ -14,12 +16,13 @@ const UsersView = () => {
         first_name: '',
         last_name: '',
         mail: '',
-        password: '', // Solo para creación o actualización en admin
+        password: '',
         code: '',
         role: 'USER'
     });
 
-    // Obtener usuarios desde la API
+    const formRef = useRef(null);
+
     useEffect(() => {
         const fetchUsers = async () => {
             try {
@@ -53,14 +56,87 @@ const UsersView = () => {
         fetchUsers();
     }, []);
 
-    // Manejar cambios en los inputs
+    useEffect(() => {
+        if (showForm) {
+            // Add custom validation method for letters only
+            $.validator.addMethod("lettersOnly", function(value, element) {
+                return this.optional(element) || /^[a-zA-Z\s]+$/.test(value);
+            }, "Por favor ingrese solo letras");
+
+            $(formRef.current).validate({
+                rules: {
+                    first_name: {
+                        required: true,
+                        lettersOnly: true,
+                        maxlength: 15,
+                    },
+                    last_name: {
+                        required: true,
+                        lettersOnly: true,
+                        maxlength: 15,
+                    },
+                    mail: {
+                        required: true,
+                        email: true
+                    },
+                    password: {
+                        required: !editingUser,
+                        minlength: 8
+                    },
+                    code: {
+                        required: true,
+                        minlength: 10,
+                        maxlength: 10
+                    }
+                },
+                messages: {
+                    first_name: {
+                        required: "Por favor ingrese el nombre",
+                        lettersOnly: "Por favor ingrese solo letras",
+                        maxlength: "El nombre no puede tener más de 15 caracteres"
+                    },
+                    last_name: {
+                        required: "Por favor ingrese el apellido",
+                        lettersOnly: "Por favor ingrese solo letras",
+                        maxlength: "El apellido no puede tener más de 15 caracteres"
+                    },
+                    mail: {
+                        required: "Por favor ingrese el correo electrónico",
+                        email: "Por favor ingrese un correo electrónico válido"
+                    },
+                    password: {
+                        required: "Por favor ingrese la contraseña",
+                        minlength: "La contraseña debe tener al menos 8 caracteres"
+                    },
+                    code: {
+                        required: "Por favor ingrese la cédula",
+                        minlength: "La cédula debe tener exactamente 10 caracteres",
+                        maxlength: "La cédula debe tener exactamente 10 caracteres"
+                    }
+                },
+                errorElement: "div",
+                errorPlacement: function (error, element) {
+                    error.addClass("invalid-feedback");
+                    element.closest(".form-group").append(error);
+                },
+                highlight: function (element) {
+                    $(element).addClass("is-invalid").removeClass("is-valid");
+                },
+                unhighlight: function (element) {
+                    $(element).addClass("is-valid").removeClass("is-invalid");
+                }
+            });
+        }
+    }, [showForm, editingUser]);
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setNewUser({ ...newUser, [name]: value });
     };
 
-    // Crear nuevo usuario (solo para ADMIN)
     const handleCreateUser = async () => {
+        if (!$(formRef.current).valid()) return;
+
         try {
             const response = await axios.post(`${API_URL_USER}/register-user`, newUser, {
                 headers: {
@@ -77,39 +153,33 @@ const UsersView = () => {
         }
     };
 
-    // Editar usuario: carga el usuario en edición (para ADMIN o USER)
     const handleEditUser = (user) => {
         if (editingUser && editingUser.id_user === user.id_user) {
             setEditingUser(null);
             setShowForm(false);
         } else {
             setEditingUser(user);
-            setNewUser(user); // Se carga el usuario completo en el estado
+            setNewUser(user);
             setShowForm(true);
         }
     };
 
-    // Guardar edición
     const handleSaveEdit = async () => {
+        if (!$(formRef.current).valid()) return;
+
         try {
-            // Para ADMIN se envían más campos, pero para USER solo se actualizan nombre, apellido y mail
             const userToUpdate = { ...newUser };
 
-            // Si el usuario autenticado es USER, se ignoran los campos no permitidos
             if (authenticatedUser.role === 'USER') {
-                // Se pueden eliminar campos innecesarios
                 delete userToUpdate.password;
                 delete userToUpdate.code;
                 delete userToUpdate.role;
             } else {
-                // En caso de ADMIN, si password quedó vacío, se conserva la existente
                 if (editingUser && (!userToUpdate.password || userToUpdate.password.trim() === "")) {
                     userToUpdate.password = editingUser.password;
                 }
             }
 
-            // Definir la URL de actualización según rol: 
-            // ADMIN actualiza con /update-admin, USER con /update-user
             const url =
                 authenticatedUser.role === 'ADMIN'
                     ? `${API_URL_USER}/update-admin/${editingUser.id_user}`
@@ -131,7 +201,6 @@ const UsersView = () => {
         }
     };
 
-    // Filtrar usuarios según el rol del usuario autenticado
     const userId = localStorage.getItem('user_id');
     const usersToDisplay =
         authenticatedUser.role === 'ADMIN'
@@ -147,7 +216,6 @@ const UsersView = () => {
                     <div className="col-12 col-md-10 mx-auto">
                         <h2 className="text-center mb-4">👥 Gestión de Usuarios</h2>
 
-                        {/* Filtro de búsqueda solo para ADMIN */}
                         {authenticatedUser.role === 'ADMIN' && (
                             <input
                                 type="text"
@@ -158,7 +226,6 @@ const UsersView = () => {
                             />
                         )}
 
-                        {/* Botón para agregar usuario, solo para ADMIN */}
                         {authenticatedUser.role === 'ADMIN' && (
                             <button
                                 className="btn btn-success mb-3"
@@ -167,7 +234,6 @@ const UsersView = () => {
                                         setShowForm(false);
                                     } else {
                                         setEditingUser(null);
-                                        // Al crear un usuario se muestra el campo contraseña y demás
                                         setNewUser({ first_name: '', last_name: '', mail: '', password: '', code: '', role: 'USER' });
                                         setShowForm(true);
                                     }
@@ -176,7 +242,6 @@ const UsersView = () => {
                             </button>
                         )}
 
-                        {/* Tabla de usuarios */}
                         <div className="table-responsive">
                             <table className="table table-bordered table-striped">
                                 <thead>
@@ -214,102 +279,100 @@ const UsersView = () => {
                             </table>
                         </div>
 
-                        {/* Formulario de agregar/editar usuario */}
                         {showForm && (
                             <div className="card p-4">
                                 <h3>{editingUser ? "✏️ Editar Usuario" : "➕ Agregar Usuario"}</h3>
-                                <div className="row">
-                                    {authenticatedUser.role === 'USER' ? (
-                                        // Si el rol es USER, solo se muestran estos campos:
-                                        <>
-                                            <div className="col-md-6 col-lg-4 mb-3">
-                                                <label className="form-label">Nombre</label>
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    name="first_name"
-                                                    value={newUser.first_name || ""}
-                                                    onChange={handleInputChange}
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="col-md-6 col-lg-4 mb-3">
-                                                <label className="form-label">Apellido</label>
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    name="last_name"
-                                                    value={newUser.last_name || ""}
-                                                    onChange={handleInputChange}
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="col-md-6 col-lg-4 mb-3">
-                                                <label className="form-label">Correo Electrónico</label>
-                                                <input
-                                                    type="email"
-                                                    className="form-control"
-                                                    name="mail"
-                                                    value={newUser.mail || ""}
-                                                    onChange={handleInputChange}
-                                                    required
-                                                />
-                                            </div>
-                                        </>
-                                    ) : (
-                                        // Si el usuario es ADMIN, se muestran todos los campos para creación/edición
-                                        <>
-                                            {[
-                                                { key: "first_name", label: "Nombre", type: "text" },
-                                                { key: "last_name", label: "Apellido", type: "text" },
-                                                { key: "mail", label: "Correo Electrónico", type: "email" },
-                                                { key: "code", label: "Cédula", type: "text" }
-                                            ].map(({ key, label, type }) => (
-                                                <div className="col-md-6 col-lg-4 mb-3" key={key}>
-                                                    <label className="form-label">{label}</label>
+                                <form ref={formRef}>
+                                    <div className="row">
+                                        {authenticatedUser.role === 'USER' ? (
+                                            <>
+                                                <div className="col-md-6 col-lg-4 mb-3 form-group">
+                                                    <label className="form-label">Nombre</label>
                                                     <input
-                                                        type={type}
+                                                        type="text"
                                                         className="form-control"
-                                                        name={key}
-                                                        value={newUser[key] || ""}
+                                                        name="first_name"
+                                                        value={newUser.first_name || ""}
                                                         onChange={handleInputChange}
                                                         required
                                                     />
                                                 </div>
-                                            ))}
-                                            {/* Campo de contraseña solo en creación (no en edición) */}
-                                            {!editingUser && (
-                                                <div className="col-md-6 col-lg-4 mb-3">
-                                                    <label className="form-label">Contraseña</label>
+                                                <div className="col-md-6 col-lg-4 mb-3 form-group">
+                                                    <label className="form-label">Apellido</label>
                                                     <input
-                                                        type="password"
+                                                        type="text"
                                                         className="form-control"
-                                                        name="password"
-                                                        value={newUser.password || ""}
+                                                        name="last_name"
+                                                        value={newUser.last_name || ""}
                                                         onChange={handleInputChange}
                                                         required
                                                     />
                                                 </div>
-                                            )}
-                                            <div className="col-md-6 col-lg-4 mb-3">
-                                                <label className="form-label">Rol</label>
-                                                <select
-                                                    className="form-control"
-                                                    name="role"
-                                                    value={newUser.role || ""}
-                                                    onChange={handleInputChange}
-                                                    required
-                                                >
-                                                    <option value="USER">USER</option>
-                                                    <option value="ADMIN">ADMIN</option>
-                                                </select>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                                <button className="btn btn-primary" onClick={editingUser ? handleSaveEdit : handleCreateUser}>
-                                    {editingUser ? "💾 Guardar Cambios" : "➕ Agregar Usuario"}
-                                </button>
+                                                <div className="col-md-6 col-lg-4 mb-3 form-group">
+                                                    <label className="form-label">Correo Electrónico</label>
+                                                    <input
+                                                        type="email"
+                                                        className="form-control"
+                                                        name="mail"
+                                                        value={newUser.mail || ""}
+                                                        onChange={handleInputChange}
+                                                        required
+                                                    />
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                {[
+                                                    { key: "first_name", label: "Nombre", type: "text" },
+                                                    { key: "last_name", label: "Apellido", type: "text" },
+                                                    { key: "mail", label: "Correo Electrónico", type: "email" },
+                                                    { key: "code", label: "Código", type: "text" }
+                                                ].map(({ key, label, type }) => (
+                                                    <div className="col-md-6 col-lg-4 mb-3 form-group" key={key}>
+                                                        <label className="form-label">{label}</label>
+                                                        <input
+                                                            type={type}
+                                                            className="form-control"
+                                                            name={key}
+                                                            value={newUser[key] || ""}
+                                                            onChange={handleInputChange}
+                                                            required
+                                                        />
+                                                    </div>
+                                                ))}
+                                                {!editingUser && (
+                                                    <div className="col-md-6 col-lg-4 mb-3 form-group">
+                                                        <label className="form-label">Contraseña</label>
+                                                        <input
+                                                            type="password"
+                                                            className="form-control"
+                                                            name="password"
+                                                            value={newUser.password || ""}
+                                                            onChange={handleInputChange}
+                                                            required
+                                                        />
+                                                    </div>
+                                                )}
+                                                <div className="col-md-6 col-lg-4 mb-3 form-group">
+                                                    <label className="form-label">Rol</label>
+                                                    <select
+                                                        className="form-control"
+                                                        name="role"
+                                                        value={newUser.role || ""}
+                                                        onChange={handleInputChange}
+                                                        required
+                                                    >
+                                                        <option value="USER">Usuario</option>
+                                                        <option value="ADMIN">Administrador</option>
+                                                    </select>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                    <button className="btn btn-primary" onClick={editingUser ? handleSaveEdit : handleCreateUser}>
+                                        {editingUser ? "💾 Guardar Cambios" : "➕ Agregar Usuario"}
+                                    </button>
+                                </form>
                             </div>
                         )}
                     </div>
