@@ -7,7 +7,13 @@ import { API_URL_USER } from '../config';
 import '../style/Register.css';
 
 function Register() {
+  const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
   const navigate = useNavigate();
   const formRef = useRef(null);
 
@@ -51,13 +57,15 @@ function Register() {
     e.preventDefault();
     if (!$(formRef.current).valid()) return;
 
-    const formData = new FormData(formRef.current);
+    setError(null);
+    setSuccess(null);
+
     const userData = {
-      code: formData.get("code"),
-      first_name: formData.get("firstName"),
-      last_name: formData.get("lastName"),
-      mail: formData.get("email"),
-      password: formData.get("password"),
+      code: code,
+      first_name: firstName,
+      last_name: lastName,
+      mail: email,
+      password: password,
       role: 'USER',
       status: true,
       failed_attempts: 0
@@ -65,7 +73,10 @@ function Register() {
 
     try {
       await axios.post(`${API_URL_USER}/register-user`, userData);
-      navigate('/login');
+      setSuccess('¡Usuario registrado correctamente! Serás redirigido al inicio de sesión.');
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
     } catch (error) {
       setError('Error al registrar el usuario');
       console.error('Error en registro:', error);
@@ -82,29 +93,76 @@ function Register() {
           <form ref={formRef} onSubmit={handleSubmit}>
             <div className="form-group mb-3">
               <label htmlFor="code">Código:</label>
-              <input type="text" name="code" id="code" className="form-control" />
+              <input
+                type="text"
+                id="code"
+                name="code"
+                className="form-control"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+              />
             </div>
             <div className="form-group mb-3">
               <label htmlFor="firstName">Nombre:</label>
-              <input type="text" name="firstName" id="firstName" className="form-control" />
+              <input
+                type="text"
+                id="firstName"
+                name="firstName"
+                className="form-control"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+              />
             </div>
             <div className="form-group mb-3">
               <label htmlFor="lastName">Apellido:</label>
-              <input type="text" name="lastName" id="lastName" className="form-control" />
+              <input
+                type="text"
+                id="lastName"
+                name="lastName"
+                className="form-control"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+              />
             </div>
             <div className="form-group mb-3">
               <label htmlFor="email">Correo Electrónico:</label>
-              <input type="email" name="email" id="email" className="form-control" />
+              <input
+                type="email"
+                id="email"
+                name="email"
+                className="form-control"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
             <div className="form-group mb-3">
               <label htmlFor="password">Contraseña:</label>
-              <input type="password" name="password" id="password" className="form-control" />
+              <input
+                type="password"
+                id="password"
+                name="password"
+                className="form-control"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
             {error && <div className="alert alert-danger">{error}</div>}
+            {success && <div className="alert alert-success">{success}</div>}
             <button type="submit" className="btn btn-primary w-100">Registrar</button>
           </form>
           <div className="text-center mt-3">
-            <Link to="/login" className="btn btn-link">Inicia sesión</Link>
+            <Link 
+              to="/" 
+              className="btn btn-outline-primary btn-sm px-4 py-2" 
+              style={{ 
+                borderRadius: '20px', 
+                fontWeight: 'bold', 
+                textTransform: 'uppercase',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              Inicia sesión
+            </Link>
           </div>
         </div>
       </div>
